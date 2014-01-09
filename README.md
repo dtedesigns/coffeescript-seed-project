@@ -14,6 +14,8 @@ With this seed, you should be able to:
 
 Cycle steps one through three, before finally getting to step four. Build and repeat as necessary.
 
+**Note:** If you prefer vanilla, this seed is ported to [javascript-seed-project](https://github.com/Dashed/javascript-seed-project).
+
 Included
 ========
 
@@ -168,10 +170,8 @@ Build
 To Do
 =====
 
-
 * Consider using gulp-mocha in tandem with gulp-watch.
 
-* Port to javascript-seed-project
 
 License
 =======
