@@ -48,14 +48,11 @@ var getGlob = function(glob_target, opts) {
     case DEV_ENV:
 
       // watch files and re-emit them downstream on change (or some file event)
-
-
       opts.glob = glob_target;
 
       return watch(opts)
                 .pipe(plumber())
                 .pipe(through());
-
 
     case PROD_ENV:
       return src.pipe(plumber());

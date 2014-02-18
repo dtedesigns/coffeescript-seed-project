@@ -119,9 +119,9 @@ Development Workflow
 
     This runs gulp.js, and processes the default task defined within `gulpfile.js`, which, by default, runs the **dev** task.
 
-  The dev task, in principle, run tasks which compile any and all the CoffeeScript files (with extension `.coffee`) under the **./src/** folder. Afterwards these CoffeeScript files are watched and compiled they're changed. These tasks are delagated to **webpack**.
+    The dev task, in principle, runs webpack which then watch and compile the target file as configured within `webpack.config.js`. Compiled file(s) are placed within the **./dist/** folder.
 
-  webpack supports code-splitting, which is useful for large projects. See [webpack docs](http://webpack.github.io/docs/code-splitting.html).
+    webpack supports code-splitting, which is useful for large projects. See [webpack docs](http://webpack.github.io/docs/code-splitting.html).
 
 2.  Add/edit CoffeeScript source files within **./src/** folder.
 
@@ -168,6 +168,15 @@ Run `npm test --coverage` for instanbul to generate the HTML report within `./co
 Refer to earlier parts of this document under "Set Up", to be able to publish LCOV reports to coveralls.io for public code coverage from a local environment. It's not really useful since there are local code-coverage report generation.
 
 There is a separate test/code-coverage command for travis-ci (`npm run test-travis`), which is useful for pushing LCOV reports to coveralls.io during a travis-ci test.
+
+Source map file(s)
+==================
+
+Source map file(s) are generated during both **dev** and **prod** tasks within gulp.
+
+In **dev** task, webpack generates the associated source map file(s).
+
+In **prod** task, uglifyjs2 generates the associated source map file(s).
 
 Build
 =====
