@@ -1,54 +1,67 @@
+/*jshint node:true */
 /* gulpfile.js - https://github.com/gulpjs/gulp */
 
-var path = require('path');
+// for mocha
+require('coffee-script/register');
 
-var gulp = require('gulp');
-var through = require('through');
+var
+/** node.js **/
+path = require('path'),
+fs = require('fs'),
 
-// Gulp plugins
-var gutil = require('gulp-util');
-var coffee = require('gulp-coffee');
-var watch = require('gulp-watch'); // Replaces gulp.watch
-var gulpif = require('gulp-if');
-var plumber = require('gulp-plumber');
-var uglify = require('gulp-uglify');
-var rename = require("gulp-rename");
-var through = require("through");
+/** Gulp and plugins **/
+gulp = require('gulp'),
+gutil = require('gulp-util'),
+watch = require('gulp-watch'),
+plumber = require('gulp-plumber'),
+uglify = require('gulp-uglify'),
+rename = require('gulp-rename'),
+mocha = require('gulp-mocha'),
 
+/** utility **/
+through = require('through2').obj,
+
+/** webpack **/
+webpack = require('webpack'),
+webpackconfig = require('./webpack.config'),
 
 /** Config **/
-var srcCoffeeDir = './coffee/';
-var destDir = './src/';
+srcCoffeeDir = './coffee/',
+destDir = './src/',
 
-var distDir = './dist/';
-var distFile = 'myawesomeproject.js';
+distDir = './dist/',
+distTargetFile = 'myawesomeproject.js',
 
 /** Environment Vars **/
-var R = 0;
-var ENV_SWITCH = void 0;
+R = 0,
+ENV_SWITCH = void 0,
 
 // Env list
-var DEV_ENV = R++;
-var PROD_ENV = R++;
+DEV_ENV = R++,
+PROD_ENV = R++;
 
 
 /** Utility Functions **/
 
 // Transformation function on gulp.src depending on env
-var getGlob = function(glob_target) {
-  var src = gulp.src(glob_target)
+var getGlob = function(glob_target, opts) {
+  var src = gulp.src(glob_target, opts);
 
   switch(ENV_SWITCH) {
     case DEV_ENV:
 
       // watch files and re-emit them downstream on change (or some file event)
-      return src.pipe(watch())
+
+
+      opts.glob = glob_target;
+
+      return watch(opts)
                 .pipe(plumber())
-                .pipe(gutil.noop());
+                .pipe(through());
+
 
     case PROD_ENV:
-      return src.pipe(plumber())
-                .pipe(gutil.noop());
+      return src.pipe(plumber());
 
     default:
       throw new Error('Invalid Env');
@@ -56,70 +69,87 @@ var getGlob = function(glob_target) {
 };
 
 /* Sub-tasks */
-gulp.task('coffee', function() {
+gulp.task('set-dev', function() {
+    ENV_SWITCH = DEV_ENV;
+});
 
-    var target = path.normalize(srcCoffeeDir + '/**/*.coffee');
+gulp.task('set-prod', function() {
+    ENV_SWITCH = PROD_ENV;
+});
 
-    getGlob(target)
-        .on('data', function(file){
-            file.coffee_path = file.path;
-        })
-        .pipe(coffee({bare: true}))
-            .on('error', gutil.beep)
-        .pipe(gulp.dest(destDir))
-            .on('data', function(file) {
 
-                var to = path.normalize(destDir + '/' + path.relative(__dirname + '/' + srcCoffeeDir, file.path));
-                finalDestFilePath = path.normalize(destDir + '/' + path.basename(file.path));
+gulp.task('mocha', function() {
 
-                var from = path.relative(__dirname, file.coffee_path);
+    var mocha_opts = {};
 
-                gutil.log("Compiled '" + from + "' to '" + to + "'");
+    try {
+        var opts = fs.readFileSync('test/mocha.opts', 'utf8')
+            .trim()
+            .split(/\s+/);
 
-            });
+        opts.forEach(function(val, indx, arry) {
+            if (/^-.+?/.test(val)) {
+                val = val.replace(/^-+(.+?)/, "$1");
+                mocha_opts[val] = arry[indx + 1];
+            }
+        });
+
+    } catch (err) {
+      // ignore
+    }
+
+    return watch({ glob: 'test/**/*.coffee', read:false }, function(files) {
+
+        files
+            .pipe(mocha(mocha_opts))
+                .on('error', function(err) {
+                    if (!/tests? failed/.test(err.stack)) {
+                        console.log(err.stack);
+                    }
+                });
+    });
+
 });
 
 gulp.task('dist-minify', function() {
 
-    getGlob(distDir + '/' + distFile)
-        .pipe(uglify())
-        .pipe(rename(function(dir, base, ext) {
-            return base + '.min' + ext;
-        }))
-        .pipe(gulp.dest(distDir))
+    return getGlob(distDir + '/' + distTargetFile)
+        .pipe(rename({ suffix: '.min'}))
+        .pipe(uglify({ outSourceMap: true }))
+        .pipe(gulp.dest(distDir));
+});
+
+gulp.task('webpack', function(callback) {
+
+    webpack(webpackconfig, function(err, stats) {
+
+        if(err) throw new gutil.PluginError("webpack", err);
+
+        gutil.log("[webpack]", stats.toString({
+            // output options
+        }));
+
+    });
+
+    callback();
+
 });
 
 /* High-level tasks */
 /* Compose sub-tasks to orchestrate something to be done */
 
 /* Development task */
-gulp.task('dev', function() {
-
-    ENV_SWITCH = DEV_ENV;
-
-    /**
-    1. watch coffeescript files
-    2. compile to js
-    3. put them in src folder
-    **/
-    gulp.run('coffee');
-
+gulp.task('dev', ['set-dev', 'webpack', 'mocha'], function() {
+    // Run webpack based on config from webpack.config.js
 });
 
 
-gulp.task('prod', function() {
-
-    ENV_SWITCH = PROD_ENV;
-
-    gulp.run('dist-minify');
-
+gulp.task('prod', ['set-prod', 'dist-minify'], function() {
+    // Minify file and generate dist source map file.
 });
 
 
 // The default task (called when you run `gulp`)
-gulp.task('default', function() {
-
-    gulp.run('dev');
-
+gulp.task('default', ['dev'], function() {
+    // Run dev task by default
 });
-

@@ -5,8 +5,7 @@
   "main": "./dist/myawesomeproject.js",
   "scripts": {
     "test": "istanbul test --report html -x 'vendor/**' _mocha",
-    "test-travis": "istanbul cover -x 'vendor/**' _mocha -- -R spec;A=$?;cat coverage/lcov.info | coveralls;exit $A",
-    "webpack": "webpack"
+    "test-travis": "istanbul cover -x 'vendor/**' _mocha -- -R spec;A=$?;cat coverage/lcov.info | coveralls;exit $A"
   },
   "repository": {
     "type": "git",
@@ -24,15 +23,19 @@
     "chai": "*",
     "istanbul": "*",
     "gulp": "~3",
-    "gulp-coffee": "~1",
     "gulp-util": "~2",
     "coveralls": "~2",
     "gulp-uglify": "~0",
     "webpack": "~0",
     "gulp-watch": "~0",
-    "gulp-if": "~0",
     "gulp-plumber": "~0",
-    "through": "~2",
-    "gulp-rename": "~0"
+    "through2": "~0",
+    "gulp-rename": "~1",
+    "coffee-loader": "~0",
+    "gulp-mocha": "~0.4.1"
+  },
+  "engines": {
+    "node": ">=0.9",
+    "npm": ">=1.2.10"
   }
 }
