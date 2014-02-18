@@ -26,9 +26,6 @@ webpack = require('webpack'),
 webpackconfig = require('./webpack.config'),
 
 /** Config **/
-srcCoffeeDir = './coffee/',
-destDir = './src/',
-
 distDir = './dist/',
 distTargetFile = 'myawesomeproject.js',
 
